@@ -12,11 +12,11 @@
   "algorithm-type-name": "BasicTemplateFrameworkAlgorithm",
 
   // Algorithm language selector - options CSharp, FSharp, VisualBasic, Python, Java
-  "algorithm-language": "CSharp",
+  "algorithm-language": "Python",
 
   //Physical DLL location
-  "algorithm-location": "QuantConnect.Algorithm.CSharp.dll",
-  //"algorithm-location": "../../../Algorithm.Python/BasicTemplateFrameworkAlgorithm.py",
+  // "algorithm-location": "QuantConnect.Algorithm.CSharp.dll",
+  "algorithm-location": "../../../Algorithm.Python/BasicTemplateFrameworkAlgorithm.py",
   //"algorithm-location": "QuantConnect.Algorithm.FSharp.dll",
   //"algorithm-location": "QuantConnect.Algorithm.VisualBasic.dll",
   //"algorithm-location": "QuantConnect.Algorithm.Java.dll",
@@ -67,13 +67,14 @@
   "live-data-port": 8020,
 
   // interactive brokers configuration
-  "ib-account": "",
-  "ib-user-name": "",
-  "ib-password": "",
+  "ib-version": "975",
+  "ib-account": "U9767850",
+  "ib-user-name": "fan196319",
+  "ib-password": "Alex119966331991",
   "ib-host": "127.0.0.1",
   "ib-port": "4002",
   "ib-agent-description": "Individual",
-  "ib-tws-dir": "C:\\Jts",
+  "ib-tws-dir": "/Users/fankainang/Jts",
   "ib-trading-mode": "paper",
   "ib-enable-delayed-streaming-data": false,
 

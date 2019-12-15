@@ -69,12 +69,14 @@ namespace QuantConnect.ToolBox.IBDownloader
                 var dataDirectory = Config.Get("data-folder", "../../../Data");
 
                 // Only FOREX for now
-                SecurityType securityType = SecurityType.Forex;
+                SecurityType securityType = SecurityType.Future ;
                 string market = Market.FXCM;
 
 
                 using (var downloader = new IBDataDownloader())
                 {
+                    var tickerLength = tickers.Count();
+                    Log.Trace($"IBDataDownloader.ctor(): tickerLength: {tickerLength}");
                     foreach (var ticker in tickers)
                     {
                         // Download the data

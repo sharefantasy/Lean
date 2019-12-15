@@ -167,6 +167,22 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
         /// </summary>
         public bool IsFinancialAdvisor => IsMasterAccount(_account);
 
+
+        /// <summary>
+        ///   Connection timeout. Mind the slow network
+        /// </summary>
+        private readonly int ConnectionTimeout = 300000;
+
+        /// <summary>
+        ///   Operation timeout. Mind the slow network
+        /// </summary>
+        private readonly int OperationTimeout = 300000;
+
+        /// <summary>
+        ///   MaxConnectionAttempts 
+        /// </summary>
+        private readonly int MaxConnectionAttempts = 20;
+
         /// <summary>
         /// Returns true if the account is a financial advisor or non-disclosed broker master account
         /// </summary>
@@ -501,7 +517,7 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
             }
 
             // wait for our end signal
-            var timedOut = !manualResetEvent.WaitOne(15000);
+            var timedOut = !manualResetEvent.WaitOne(300000);
 
             // remove our handlers
             _client.OpenOrder -= clientOnOpenOrder;
@@ -671,19 +687,20 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
             _accountData.Clear();
 
             var attempt = 1;
-            const int maxAttempts = 5;
 
             var subscribedSymbolsCount = _subscribedSymbols.Skip(0).Count();
             if (subscribedSymbolsCount > 0)
             {
                 Log.Trace($"InteractiveBrokersBrokerage.Connect(): Data subscription count {subscribedSymbolsCount}, restoring data subscriptions is required");
+            } else {
+                Log.Trace("InteractiveBrokersBrokerage.Connect(): No Data subscriptions required");
             }
 
             while (true)
             {
                 try
                 {
-                    Log.Trace("InteractiveBrokersBrokerage.Connect(): Attempting to connect ({0}/{1}) ...", attempt, maxAttempts);
+                    Log.Trace("InteractiveBrokersBrokerage.Connect(): Attempting to connect ({0}/{1}) ...", attempt, MaxConnectionAttempts);
 
                     // if message processing thread is still running, wait until it terminates
                     Disconnect();
@@ -692,7 +709,7 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                     // Attempting to connect to the socket too early will get a SocketException: Connection refused.
                     if (attempt == 1)
                     {
-                        Thread.Sleep(2500);
+                        Thread.Sleep(3500);
                     }
 
                     // we're going to try and connect several times, if successful break
@@ -721,12 +738,12 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                         }
 
                         Log.Trace("InteractiveBrokersBrokerage.Connect(): IB message processing thread ended: #" + Thread.CurrentThread.ManagedThreadId);
-                    }) { IsBackground = true };
+                    }) { IsBackground = true};
 
                     _messageProcessingThread.Start();
 
                     // pause for a moment to receive next valid ID message from gateway
-                    if (!_waitForNextValidId.WaitOne(15000))
+                    if (!_waitForNextValidId.WaitOne(ConnectionTimeout))
                     {
                         Log.Trace("InteractiveBrokersBrokerage.Connect(): Operation took longer than 15 seconds.");
 
@@ -734,7 +751,7 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                         Disconnect();
 
                         // max out at 5 attempts to connect ~1 minute
-                        if (attempt++ < maxAttempts)
+                        if (attempt++ < MaxConnectionAttempts)
                         {
                             Thread.Sleep(1000);
                             continue;
@@ -758,11 +775,11 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                             if (_accountHoldingsLastException != null)
                             {
                                 // if an exception was thrown during account download, do not retry but exit immediately
-                                attempt = maxAttempts;
+                                attempt = MaxConnectionAttempts;
                                 throw new Exception(_accountHoldingsLastException.Message, _accountHoldingsLastException);
                             }
 
-                            if (attempt++ < maxAttempts)
+                            if (attempt++ < MaxConnectionAttempts)
                             {
                                 Thread.Sleep(1000);
                                 continue;
@@ -782,11 +799,11 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                             if (_accountHoldingsLastException != null)
                             {
                                 // if an exception was thrown during account download, do not retry but exit immediately
-                                attempt = maxAttempts;
+                                attempt = MaxConnectionAttempts;
                                 throw new Exception(_accountHoldingsLastException.Message, _accountHoldingsLastException);
                             }
 
-                            if (attempt++ < maxAttempts)
+                            if (attempt++ < MaxConnectionAttempts)
                             {
                                 Thread.Sleep(1000);
                                 continue;
@@ -809,7 +826,7 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
                 catch (Exception err)
                 {
                     // max out at 5 attempts to connect ~1 minute
-                    if (attempt++ < maxAttempts)
+                    if (attempt++ < MaxConnectionAttempts)
                     {
                         Thread.Sleep(15000);
                         continue;
@@ -886,13 +903,13 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
             _client.ClientSocket.reqAccountUpdates(true, account);
 
             // wait to see the first account value update
-            firstAccountUpdateReceived.WaitOne(2500);
+            firstAccountUpdateReceived.WaitOne(OperationTimeout);
 
             // take pause to ensure the account is downloaded before continuing, this was added because running in
             // linux there appears to be different behavior where the account download end fires immediately.
-            Thread.Sleep(2500);
+            Thread.Sleep(OperationTimeout);
 
-            if (!_accountHoldingsResetEvent.WaitOne(15000))
+            if (!_accountHoldingsResetEvent.WaitOne(OperationTimeout))
             {
                 // remove our event handlers
                 _client.AccountDownloadEnd -= clientOnAccountDownloadEnd;
@@ -1327,6 +1344,9 @@ namespace QuantConnect.Brokerages.InteractiveBrokers
             lock (_sync)
             {
                 subscribedSymbols = _subscribedSymbols.Keys.ToList();
+                subscribedSymbols.Add("HSIZ9");
+                var symbolLength = subscribedSymbols.Count();
+                Log.Trace($"InteractiveBrokersBrokerage.RestoreDataSubscriptions(): subscribedCount {symbolLength}");
 
                 _subscribedSymbols.Clear();
                 _subscribedTickers.Clear();

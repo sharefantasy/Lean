@@ -75,3 +75,10 @@ class BasicTemplateFrameworkAlgorithm(QCAlgorithm):
     def OnOrderEvent(self, orderEvent):
         if orderEvent.Status == OrderStatus.Filled:
             self.Debug("Purchased Stock: {0}".format(orderEvent.Symbol))
+
+    def OnEndOfAlgorithm(self):
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        frame = pd.DataFrame([0, 1, 2, 3, 4])
+        frame.plot()
+        plt.show()
