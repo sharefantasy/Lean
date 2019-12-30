@@ -17,7 +17,7 @@ class SarIndicator(object):
         self.b = b
         self.window = window
         self.name = name
-        self.colorarry = deque(maxlen=window)
+        self.colorArray = deque(maxlen=window)
         self.Color = None
 
     def Update(self, quoteBar):
@@ -32,9 +32,16 @@ class SarIndicator(object):
         value = SAR(to_np(self.high), to_np(self.low), self.a, self.b)
         self.Value = float(value[-1])
         color = '红' if value <= quoteBar.Close else '绿'
-        self.colorarry.appendleft(color)
+        self.colorArray.appendleft(color)
         self.IsReady = True
 
+    @property
+    def PreviousColor(self):
+        return self.colorArray[1] if len(self.colorArray) > 1 else None
+
+    @property
+    def CurrentColor(self):
+        return self.Color
 
 def to_np(ll):
     return np.array(ll)
