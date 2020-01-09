@@ -13,16 +13,34 @@
  * limitations under the License.
 */
 
+using System.Linq;
 using NUnit.Framework;
 using QuantConnect.Algorithm;
 using QuantConnect.Data.Market;
 using QuantConnect.Tests.Engine.DataFeeds;
+using QuantConnect.Util;
 
 namespace QuantConnect.Tests.Algorithm
 {
     [TestFixture]
     public class AlgorithmResolveConsolidatorTests
     {
+        [TestCase(SecurityType.Equity, "SPY")]
+        [TestCase(SecurityType.Crypto, "BTCUSD")]
+        [TestCase(SecurityType.Forex, "EURUSD")]
+        public void ConsolidatorHasSameTypeAsSubscriptionDataConfig(SecurityType securityType, string ticker)
+        {
+            var algorithm = new QCAlgorithm();
+            algorithm.SubscriptionManager.SetDataManager(new DataManagerStub(algorithm));
+            var security = algorithm.AddSecurity(securityType, ticker);
+            var consolidator = algorithm.ResolveConsolidator(ticker, Resolution.Minute);
+
+            var inputType = security.Subscriptions.Single(s=>s.TickType==LeanData.GetCommonTickType(securityType)).Type;
+            var outputType = consolidator.OutputType;
+
+            Assert.AreEqual(inputType, outputType);
+        }
+
         [Test]
         public void TradeBarToTradeBar()
         {
@@ -31,7 +49,7 @@ namespace QuantConnect.Tests.Algorithm
             var security = algorithm.AddEquity("SPY");
             var consolidator = algorithm.ResolveConsolidator("SPY", Resolution.Minute);
 
-            var inputType = security.SubscriptionDataConfig.Type;
+            var inputType = security.Subscriptions.Single(s => s.TickType == LeanData.GetCommonTickType(SecurityType.Equity)).Type;
             var outputType = consolidator.OutputType;
 
             Assert.AreEqual(inputType, outputType);
@@ -59,7 +77,7 @@ namespace QuantConnect.Tests.Algorithm
             var security = algorithm.AddEquity("SPY", Resolution.Tick);
             var consolidator = algorithm.ResolveConsolidator("SPY", Resolution.Minute);
 
-            var tickType = security.SubscriptionDataConfig.TickType;
+            var tickType = security.Subscriptions.Single(s => s.TickType == LeanData.GetCommonTickType(SecurityType.Equity)).TickType;
             var outputType = consolidator.OutputType;
 
             Assert.AreEqual(TickType.Trade, tickType);
@@ -74,7 +92,8 @@ namespace QuantConnect.Tests.Algorithm
             var security = algorithm.AddForex("EURUSD", Resolution.Tick);
             var consolidator = algorithm.ResolveConsolidator("EURUSD", Resolution.Minute);
 
-            var tickType = security.SubscriptionDataConfig.TickType;
+            var tickType = security.Subscriptions.Single(s => s.TickType == LeanData.GetCommonTickType(SecurityType.Forex)).TickType;
+
             var outputType = consolidator.OutputType;
 
             Assert.AreEqual(TickType.Quote, tickType);
@@ -89,7 +108,7 @@ namespace QuantConnect.Tests.Algorithm
             var security = algorithm.AddEquity("SPY", Resolution.Tick);
             var consolidator = algorithm.ResolveConsolidator("SPY", Resolution.Tick);
 
-            var tickType = security.SubscriptionDataConfig.TickType;
+            var tickType = security.Subscriptions.Single(s => s.TickType == LeanData.GetCommonTickType(SecurityType.Equity)).TickType;
             var inputType = security.SubscriptionDataConfig.Type;
             var outputType = consolidator.OutputType;
 

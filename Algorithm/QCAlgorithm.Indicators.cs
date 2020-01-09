@@ -20,6 +20,7 @@ using QuantConnect.Indicators;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using QuantConnect.Util;
 using static QuantConnect.StringExtensions;
 
 namespace QuantConnect.Algorithm
@@ -1738,8 +1739,13 @@ namespace QuantConnect.Algorithm
                 // deterministic ordering is required here
                 var subscriptions = SubscriptionManager.Subscriptions.OrderBy(x => x.TickType);
 
+                if (tickType == null)
+                {
+                    tickType = LeanData.GetCommonTickType(symbol.SecurityType);
+                }
+
                 // find our subscription to this symbol
-                subscription = subscriptions.FirstOrDefault(x => x.Symbol == symbol && (tickType == null || tickType == x.TickType));
+                subscription = subscriptions.SingleOrDefault(x => x.Symbol == symbol && x.TickType == tickType);
                 if (subscription == null)
                 {
                     // if we can't locate the exact subscription by tick type just grab the first one we find
