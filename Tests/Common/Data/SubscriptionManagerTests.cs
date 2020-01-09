@@ -34,8 +34,6 @@ namespace QuantConnect.Tests.Common.Data
         [Test]
         [TestCase(SecurityType.Base, Resolution.Minute, typeof(TradeBar), TickType.Trade)]
         [TestCase(SecurityType.Base, Resolution.Tick, typeof(Tick), TickType.Trade)]
-        [TestCase(SecurityType.Equity, Resolution.Minute, typeof(TradeBar), TickType.Trade)]
-        [TestCase(SecurityType.Equity, Resolution.Tick, typeof(Tick), TickType.Trade)]
         [TestCase(SecurityType.Forex, Resolution.Minute, typeof(QuoteBar), TickType.Quote)]
         [TestCase(SecurityType.Forex, Resolution.Tick, typeof(Tick), TickType.Quote)]
         [TestCase(SecurityType.Cfd, Resolution.Minute, typeof(QuoteBar), TickType.Quote)]
@@ -96,11 +94,13 @@ namespace QuantConnect.Tests.Common.Data
         }
 
         [Test]
-        [TestCase(Resolution.Minute)]
-        [TestCase(Resolution.Tick)]
-        public void GetsSubscriptionDataTypesCrypto(Resolution resolution)
+        [TestCase(SecurityType.Equity, Resolution.Minute)]
+        [TestCase(SecurityType.Equity, Resolution.Tick)]
+        [TestCase(SecurityType.Crypto, Resolution.Minute)]
+        [TestCase(SecurityType.Crypto, Resolution.Tick)]
+        public void GetsSubscriptionDataTypes(SecurityType securityType, Resolution resolution)
         {
-            var types = GetSubscriptionDataTypes(SecurityType.Crypto, resolution);
+            var types = GetSubscriptionDataTypes(securityType, resolution);
 
             Assert.AreEqual(2, types.Count);
 
