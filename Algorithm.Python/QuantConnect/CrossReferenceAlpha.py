@@ -29,6 +29,7 @@ class CrossReferenceAlpha(AlphaModel):
     注意事项
     1. 就算划线策略中有趋势，其他数据和标志位都要计算,但是不能加入到信号中
     2. 需要配合止损模型使用。
+    3. ........
     '''
 
     def __init__(self, window, symbol):
