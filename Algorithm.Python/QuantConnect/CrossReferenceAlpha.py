@@ -30,16 +30,18 @@ class CrossReferenceAlpha(AlphaModel):
     1. 就算划线策略中有趋势，其他数据和标志位都要计算,但是不能加入到信号中
     2. 需要配合止损模型使用。
     '''
+
     def __init__(self, window, symbol):
         insight_resolution = Resolution.Minute
-        self.insight_period = Time.Multiply(Extensions.ToTimeSpan(insight_resolution), 1)
+        self.insight_period = Time.Multiply(
+            Extensions.ToTimeSpan(insight_resolution), 1)
         self.barSeries = deque(maxlen=window)
         self.symbol = symbol
 
-        self.sar = SarIndicator()
-        self.longShort = LongShortIndicator()
-        self.drawLines = DrawLinesIndicator()
-        self.bottomTop = BottomTopIndicator()
+        self.sar = SarIndicator(window)
+        self.longShort = LongShortIndicator(window)
+        self.drawLines = DrawLinesIndicator(window)
+        self.bottomTop = BottomTopIndicator(window)
         self.bottomTopMark = None
 
     def Update(self, algorithm, data):
@@ -59,13 +61,15 @@ class CrossReferenceAlpha(AlphaModel):
             return insights
 
         # 是否需要出信号
-        longInsight = Insight.Price(self.symbol, self.insight_period, InsightDirection.Up)
-        shortInsight = Insight.Price(self.symbol, self.insight_period, InsightDirection.Down)
+        longInsight = Insight.Price(self.symbol, self.insight_period,
+                                    InsightDirection.Up)
+        shortInsight = Insight.Price(self.symbol, self.insight_period,
+                                     InsightDirection.Down)
 
         # 计算画线规则
         if self.drawLines.IsReady:
             linePredictPrice = self.drawLines.CalPredicts()
-            if bar.Close > linePredictPrice and algorithm.:
+            if bar.Close > linePredictPrice:
                 insights = [longInsight]
             elif bar.Close < linePredictPrice:
                 insights = [shortInsight]
@@ -73,9 +77,9 @@ class CrossReferenceAlpha(AlphaModel):
         # 计算底顶规则
         if self.bottomTop.IsReady and len(insights) == 0:
             if self.bottomTop.Value >= 90:
-                self.bottomTopMark =  '空'
+                self.bottomTopMark = '空'
             elif self.bottomTop.Value <= 10:
-                self.bottomTopMark =  '多'
+                self.bottomTopMark = '多'
 
         if self.longShort.IsReady and len(insights) == 0:
             if self.bottomTopMark == '空' and self.longShort.CurrentColor == '蓝':
